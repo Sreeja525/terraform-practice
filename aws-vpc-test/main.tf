@@ -3,4 +3,5 @@ module "vpc" {
     environment = "dev"
     project = "roboshop"
     public_subnets = var.public_subnet_cidrs
+
 }
