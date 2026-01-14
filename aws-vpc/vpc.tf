@@ -120,6 +120,35 @@ resource "aws_route_table" "database" {
   )
 }
 
+#creating elastic IP for NAT gateway
+resource "aws_eip" "nat" {
+  domain   = "vpc" # indicates within our VPC
+
+  tags = merge(
+    local.common_tags,
+    {
+      NAme = "${var.project}-${var.environment}-eip"
+    }
+
+  )
+}
+
+resource "aws_nat_gateway" "main" {
+  allocation_id = aws_eip.nat.id
+  subnet_id     = aws_subnet.public[0].id
+
+  tags = merge(
+    local.common_tags,
+    {
+      NAme = "${var.project}-${var.environment}-nat"
+    }
+
+  )
+
+  # To ensure proper ordering, it is recommended to add an explicit dependency
+  # on the Internet Gateway for the VPC.
+  depends_on = [aws_internet_gateway.main]
+}
 
 resource "aws_route" "public" {
   route_table_id            = aws_route_table.public.id
@@ -127,11 +156,17 @@ resource "aws_route" "public" {
   gateway_id                = aws_internet_gateway.main.id
 }
 
-/* resource "aws_route" "private" {
+resource "aws_route" "private" {
   route_table_id            = aws_route_table.private.id
-  destination_cidr_block    = "0.0.0.0/0"
-  gateway_id                = aws_internet_gateway.main.id
-} */
+  destination_cidr_block    = aws_eip.nat.id
+  gateway_id                = aws_nat_gateway.main.id
+}
+
+resource "aws_route" "database" {
+  route_table_id            = aws_route_table.database.id
+  destination_cidr_block    = aws_eip.nat.id
+  gateway_id                = aws_nat_gateway.main.id
+}
 
 resource "aws_route_table_association" "public" {
   count = length(var.public_subnets)
