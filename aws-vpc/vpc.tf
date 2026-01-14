@@ -127,7 +127,7 @@ resource "aws_eip" "nat" {
   tags = merge(
     local.common_tags,
     {
-      NAme = "${var.project}-${var.environment}-eip"
+      Name = "${var.project}-${var.environment}-eip"
     }
 
   )
@@ -140,7 +140,7 @@ resource "aws_nat_gateway" "main" {
   tags = merge(
     local.common_tags,
     {
-      NAme = "${var.project}-${var.environment}-nat"
+      Name = "${var.project}-${var.environment}-nat"
     }
 
   )
